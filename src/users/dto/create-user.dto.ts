@@ -1,32 +1,30 @@
 // import class-validator
-import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { randomUUID, UUID } from 'crypto';
+import { UserRole } from '../enum/role_enumeration';
 
-export interface CreateUserInterface {
-  /// using uuid as id
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
-
-export class CreateUserDto implements CreateUserInterface {
-  @IsNumber()
-  id: number;
-
+export class CreateUserDto {
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @IsEmail()
   email: string;
 
-  @IsString()
-  role: string;
+  @IsEnum(['admin', 'user', 'guest'], {
+    message: "role must be either 'admin', 'user', or 'guest'",
+  })
+  role: UserRole;
 
-  constructor(id: number, name: string, email: string, password: string) {
-    this.id = id;
+  constructor(name: string, email: string, password: string) {
     this.name = name;
     this.email = email;
-    this.role = password;
+    this.role = UserRole.Guest;
   }
 }

@@ -1,8 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { UserRole } from '../enum/role_enumeration';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateUserDto } from '../dto/create-user.dto';
 
 @Entity('users')
-export class User {
+export class User extends PartialType(CreateUserDto) {
   @PrimaryGeneratedColumn()
   id: number;
 

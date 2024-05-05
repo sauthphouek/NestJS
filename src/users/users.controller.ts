@@ -8,27 +8,33 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  ValidationPipe,
+  UseInterceptors,
+  UseFilters,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { HttpExceptionFilter } from 'src/common/filters/http-exception.filter';
+import { TransformInterceptor } from 'src/common/interceptors/transform.interceptor';
 
 @Controller('users')
+@UseInterceptors(TransformInterceptor)
+@UseFilters(HttpExceptionFilter)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  getUsers(
+  async getUsers(
     @Query('role') role?: string,
-    @Query('id', ParseIntPipe) id?: number,
-  ) {
-    // +id is used to convert string to a number
-    return this.usersService.findAll(role, id);
+    @Query('id') id?: number,
+  ): Promise<User | User[]> {
+    return this.usersService.findAll(role, +id);
   }
 
   @Post()
-  createNewUser(@Body() user: User) {
+  createNewUser(@Body(ValidationPipe) user: CreateUserDto) {
     return this.usersService.createNewUser(user);
   }
 
@@ -38,7 +44,10 @@ export class UsersController {
   }
 
   @Patch(':id')
-  updateUser(@Param('id') id: string, @Body() user: User) {
+  updateUser(
+    @Param('id') id: string,
+    @Body(ValidationPipe) user: UpdateUserDto,
+  ) {
     return this.usersService.updateUser(+id, user);
   }
 

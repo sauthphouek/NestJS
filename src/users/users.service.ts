@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { randomUUID } from 'crypto';
 import { User } from './entities/user.entity';
 import { UserRole } from './enum/role_enumeration';
 
@@ -33,27 +32,42 @@ export class UsersService {
 
   // find all users
   findAll(role?: string, id?: number) {
-    if (role || id) {
-      return this.users.filter(user => user.id === id && user.role === role);
+    if (role) {
+      const user = this.users.filter(user => user.role === role);
+      if (user.length) {
+        return user;
+      }
+      throw new NotFoundException(`User with role ${role} not found`);
     }
+
+    if (id) {
+      return this.getUserById(id);
+    }
+
     return this.users;
   }
 
   getUserById(id: number) {
-    return this.users.find(user => user.id === id);
+    const user = this.users.find(user => user.id === id);
+    if (user) {
+      return user;
+    }
+    throw new NotFoundException(`User with id ${id} not found`);
   }
 
   // create a new user
-  createNewUser(user: User) {
+  createNewUser(user: CreateUserDto) {
+    const userByHighestId = [...this.users].sort((a, b) => b.id - a.id);
     const newUser = {
-      id: this.users.length + 1,
+      id: userByHighestId[0].id + 1,
       ...user,
     };
-    return this.users.push(newUser);
+    this.users.push(newUser);
+    return newUser;
   }
 
   // update a user
-  updateUser(id: number, user: User) {
+  updateUser(id: number, user: UpdateUserDto) {
     const userId = this.getUserById(id);
     if (userId) {
       const index = this.users.indexOf(userId);
@@ -61,7 +75,7 @@ export class UsersService {
       return this.users[index];
     }
 
-    return null;
+    throw new NotFoundException(`User with id ${id} not found`);
   }
 
   // delete a user
@@ -71,7 +85,6 @@ export class UsersService {
       this.users = this.users.filter(user => user.id !== id);
       return userId;
     }
-
-    return null;
+    throw new NotFoundException(`User with id ${id} not found`);
   }
 }
